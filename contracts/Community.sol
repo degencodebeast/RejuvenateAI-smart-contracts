@@ -138,11 +138,9 @@ contract Community {
     function approveNutritionistRole(address applicant) external onlyOwner {
          NutritionistApplicationStatus applicationStatus = nutritionistApplicationStatus[msg.sender];
         // Check that applicant isn't a member already
-        require(balanceOf(applicant) == 0, "Community: already a member");
-
+       
         // Check that applicant exists
-        uint256 applicationBlock = applications[applicant].blockNumber;
-        require(applicationBlock != 0, "Community: applicant does not exist");
+    
 
         require(nutritionistApplicationStatus == NutritionistApplicationStatus.pending, "user needs to have a pending application");
 
@@ -154,7 +152,7 @@ contract Community {
         // Emit event
         emit ApplicatonApproval(msg.sender, applicant);
     }
-    
+
     function cancelApplication() {
 
     }
