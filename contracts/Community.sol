@@ -154,11 +154,7 @@ contract Community {
         // Emit event
         emit ApplicatonApproval(msg.sender, applicant);
     }
-
-    function applyForNutritionistRole() {}
-
-    function approveNutritionistRole() onlyOwner {}
-
+    
     function cancelApplication() {
 
     }
