@@ -70,10 +70,26 @@ contract Community is Ownable {
     NutritionistApplication[] public allNutritionistsApplications;
 
     struct Products {
-        string[] meals;
-        string[] fitnessPlans;
-        //mapping(address => string) consultationServices;
-        string[] consultationServices;
+        MealPlans[] meals;
+        FitnessPlans[] fitnessPlans;
+        ConsultationServices[] consultationServices;
+    }
+
+    struct MealPlans {
+        string name;
+        string mealDescription;
+        string creator;
+    }
+
+    struct FitnessPlans {
+        string name;
+        string fitnessDescription;
+        string creator; 
+    }
+
+    struct ConsultationServices {
+        string consultant;
+        string consultationDescription;
     }
 
     struct User {
@@ -86,12 +102,10 @@ contract Community is Ownable {
 
     struct Nutritionist {
         string nutritionistPersonalData; //needs to be encrypted before storing
-        //mapping(address => string) mealPlans;
-        string[] nutritionistMealplans;
+        MealPlans[] nutritionistMealplans;
         address nutritionistAddress;
-        //mapping(address => string) fitnessPlans;
-        string[] fitnessPlans;
-        string[] consultationServices;
+        FitnessPlans[] fitnessPlans;
+        ConsultationServices consultationServices;
     }
 
     Nutritionist[] public allNutritionists;
@@ -215,4 +229,12 @@ contract Community is Ownable {
     // function getAllSubscribedMembers() external {}
 
     // function getAllNutritionists() external {}
+
+    // function publishArticle() external {}
+
+    // function createMealPlan() external {}
+
+    // function createFitnessPlan() external {}
+
+    // function calculateRateOfAging() external {}
 }
