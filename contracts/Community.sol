@@ -20,6 +20,10 @@ error UnauthorizedNutritionist(address caller);
 
 error UnauthorizedMember(address caller);
 
+error InvalidDeadline();
+
+error InvalidSubStatus();
+
 contract Community is Ownable {
     using Counters for Counters.Counter;
 
@@ -30,6 +34,8 @@ contract Community is Ownable {
     uint256 public constant userApplicationFee = 0.01 ether;
 
     uint256 public constant nutritionistApplicationFee = 0.005 ether;
+
+    uint256 public subscriptionDuration = 2592000;
 
     address public immutable treasury;
 
@@ -111,6 +117,8 @@ contract Community is Ownable {
         address userAddress;
         string userPersonalData; //needs to be encrypted before storing
         //Products purchasedProducts;
+        UserSubscriptionStatus subStatus;
+        uint256 subDeadline;
     }
 
     User[] public allUsers;
@@ -156,6 +164,15 @@ contract Community is Ownable {
         _;
     }
 
+    modifier deadlinePassed(address _member) {
+        uint256 deadline = users[_member].subDeadline;
+
+        if (block.timestamp < deadline) {
+            revert InvalidDeadline();
+        }
+        _;
+    }
+
     function joinCommunity(string memory _userData) external payable {
         // Check that sender isn't a member already
         if (isMember[msg.sender]) {
@@ -166,9 +183,14 @@ contract Community is Ownable {
             revert InsufficientPayment();
         }
         isMember[msg.sender] = true;
-        User storage user = users[msg.sender];
+        User memory user = users[msg.sender];
         user.userAddress = msg.sender;
         user.userPersonalData = _userData;
+        user.subStatus = UserSubscriptionStatus.Active;
+        user.subDeadline = block.timestamp + subscriptionDuration;
+
+        users[msg.sender] = user;
+        //mint userNft for the user
 
         // Products storage products = user.purchasedProducts;
         // // Initialize other fields (nested structs) as empty arrays
@@ -184,6 +206,26 @@ contract Community is Ownable {
 
         // Emit event
         emit NewSignUp(msg.sender, _userData);
+    }
+
+    //should be called by automation
+    function revokeUser(
+        address _member
+    ) public /*onlyChainlink*/ deadlinePassed(_member) {
+        // This function can only be called by the owner after the deadline has passed
+
+        if (!isMember[_member]) {
+            revert UnauthorizedMember(_member);
+        }
+
+        User memory user = users[_member];
+        //isMember[_member] = false;
+        user.subStatus = UserSubscriptionStatus.Expired;
+        users[_member] = user;
+
+        //TODO
+        //burn user nft with automation
+        //nft will be used for access control with lighthouse
     }
 
     /// @notice Function used to apply to community
@@ -277,6 +319,9 @@ contract Community is Ownable {
         applicationStatus = NutritionistApplicationStatus.Accepted;
         nutritionistApplicationStatus[applicant] = applicationStatus;
 
+        //TODO
+        //mint nutritionist nft for nutritionist
+
         isNutritionist[applicant] = true;
         NutritionistApplication
             memory _nutritionistApplication = nutritionistApplications[
@@ -317,9 +362,24 @@ contract Community is Ownable {
         nutritionistApplicationStatus[applicant] = applicationStatus;
     }
 
-    // function renewSubscription() external onlyMembers {}
+    function renewSubscription()
+        external
+        onlyMembers
+        deadlinePassed(msg.sender)
+    {
+        User memory user = users[msg.sender];
+        if(user.subStatus != UserSubscriptionStatus.Expired) {
+            revert InvalidSubStatus();
+        }
+        user.subStatus = UserSubscriptionStatus.Active;
+        //isMember[msg.sender] = true;
+        users[msg.sender] = user;
 
-    // function getAllSubscribedMembers() external {}
+        //TODO
+        //mint user nft 
+    }
+
+    function getAllSubscribedMembers() external {}
 
     // function getAllNutritionists() external {}
 
