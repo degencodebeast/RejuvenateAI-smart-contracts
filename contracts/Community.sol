@@ -95,7 +95,7 @@ contract Community is Ownable {
     struct MealPlans {
         string mealName;
         string mealDescription;
-        string creator;
+        address creator;
     }
 
     MealPlans[] public allMealPlans;
@@ -103,13 +103,13 @@ contract Community is Ownable {
     struct FitnessPlans {
         string name;
         string fitnessDescription;
-        string creator;
+        address creator;
     }
 
     FitnessPlans[] public allFitnessPlans;
 
     struct ConsultationServices {
-        string consultant;
+        address consultant;
         string consultationDescription;
     }
 
@@ -124,14 +124,25 @@ contract Community is Ownable {
     User[] public allUsers;
 
     struct Nutritionist {
+        //string name;
         string nutritionistPersonalData; //needs to be encrypted before storing
         MealPlans[] nutritionistMealplans;
         address nutritionistAddress;
         FitnessPlans[] fitnessPlans;
         ConsultationServices consultationServices;
+        Articles[] nutritionistArticles;
     }
 
     Nutritionist[] public allNutritionists;
+
+    struct Articles {
+        string title;
+        address author;
+        string authorName;
+        string content;
+    }
+
+    Articles[] public allArticles;
 
     constructor(address _treasury) {
         treasury = _treasury;
@@ -139,7 +150,7 @@ contract Community is Ownable {
 
     /// @notice Restrict access to trusted `nutritionists`
     modifier onlyNutritionists() {
-        if (isNutritionist[msg.sender]) {
+        if (!isNutritionist[msg.sender]) {
             revert UnauthorizedNutritionist(msg.sender);
         }
         _;
@@ -191,14 +202,6 @@ contract Community is Ownable {
 
         users[msg.sender] = user;
         //mint userNft for the user
-
-        // Products storage products = user.purchasedProducts;
-        // // Initialize other fields (nested structs) as empty arrays
-        // products.meals.push(MealPlans("", "", ""));
-        // products.fitnessPlans.push(FitnessPlans("", "", ""));
-        // products.consultationServices.push(
-        //     ConsultationServices("", "")
-        // );
 
         payable(treasury).transfer(msg.value);
         allUsers.push(user);
@@ -368,7 +371,7 @@ contract Community is Ownable {
         deadlinePassed(msg.sender)
     {
         User memory user = users[msg.sender];
-        if(user.subStatus != UserSubscriptionStatus.Expired) {
+        if (user.subStatus != UserSubscriptionStatus.Expired) {
             revert InvalidSubStatus();
         }
         user.subStatus = UserSubscriptionStatus.Active;
@@ -376,20 +379,73 @@ contract Community is Ownable {
         users[msg.sender] = user;
 
         //TODO
-        //mint user nft 
+        //mint user nft
     }
 
-    function getAllSubscribedMembers() external {}
+    function getAllMembers() external view returns (User[] memory _users) {
+        _users = allUsers;
+    }
 
-    // function getAllNutritionists() external {}
+    function getAllNutritionists()
+        external
+        view
+        returns (Nutritionist[] memory _nutritionists)
+    {
+        _nutritionists = allNutritionists;
+    }
 
-    // function publishArticle() external {}
+    function createMealPlan(
+        string memory _mealName,
+        string memory mealPlanDesc
+    ) external onlyNutritionists {
+        Nutritionist storage _nutritionist = nutritionists[msg.sender];
+        MealPlans memory mealPlan = MealPlans(
+            _mealName,
+            mealPlanDesc,
+            msg.sender
+        );
+        _nutritionist.nutritionistMealplans.push(mealPlan);
+    }
 
-    // function createMealPlan() external {}
+    function createFitnessPlan(
+        string memory _fitnessName,
+        string memory fitnessDesc
+    ) external onlyNutritionists {
+        Nutritionist storage _nutritionist = nutritionists[msg.sender];
+        FitnessPlans memory fitnessPlan = FitnessPlans(
+            _fitnessName,
+            fitnessDesc,
+            msg.sender
+        );
+        _nutritionist.fitnessPlans.push(fitnessPlan);
+    }
 
-    // function createFitnessPlan() external {}
+    function createConsultation(
+        string memory _consultationDesc
+    ) external onlyNutritionists {
+        Nutritionist storage _nutritionist = nutritionists[msg.sender];
+        ConsultationServices memory consultationService = ConsultationServices(
+            msg.sender,
+            _consultationDesc
+        );
+        _nutritionist.consultationServices = consultationService;
+    }
 
-    // function createConsultation() external onlyNutritionist {}
+    function publishArticle(
+        string memory _title,
+        string memory _authorName,
+        string memory _content
+    ) external onlyOwner onlyNutritionists {
+        Nutritionist storage _nutritionist = nutritionists[msg.sender];
+        Articles memory article = Articles(
+            _title,
+            msg.sender,
+            _authorName,
+            _content
+        );
+        _nutritionist.nutritionistArticles.push(article);
+        allArticles.push(article);
+    }
 
     // function calculateRateOfAging() external {}
 }
