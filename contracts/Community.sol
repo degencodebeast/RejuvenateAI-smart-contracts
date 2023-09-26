@@ -190,15 +190,15 @@ contract Community is Ownable {
     function applyForNutritionistRole(
         string calldata dataURI
     ) external payable {
-        uint256 index = _indexCounter.current();
-        NutritionistApplicationStatus applicationStatus = nutritionistApplicationStatus[
-                msg.sender
-            ];
-
         // Check that sender isn't a nutritionist already
         if (isNutritionist[msg.sender]) {
             revert AlreadyANutrionist();
         }
+
+        uint256 index = _indexCounter.current();
+        NutritionistApplicationStatus applicationStatus = nutritionistApplicationStatus[
+                msg.sender
+            ];
 
         if (
             applicationStatus == NutritionistApplicationStatus.Pending ||
@@ -231,17 +231,44 @@ contract Community is Ownable {
         emit NewApplication(msg.sender, dataURI);
     }
 
+    function cancelNutritionistApplication()
+        external
+        onlyNutritionists
+        applicantExists(msg.sender)
+    {
+        // Check that sender isn't a nutritionist already
+        if (isNutritionist[msg.sender]) {
+            revert AlreadyANutrionist();
+        }
+
+        NutritionistApplicationStatus applicationStatus = nutritionistApplicationStatus[
+                msg.sender
+            ];
+
+        // if (applicationStatus != NutritionistApplicationStatus.Pending) {
+        //     revert InvalidApplicant();
+        // }
+
+        uint256 applicantIndex = _getApplicantIndex(msg.sender);
+        delete allNutritionistsApplicants[applicantIndex];
+        delete nutritionistApplications[msg.sender];
+
+        applicationStatus = NutritionistApplicationStatus.Canceled;
+        nutritionistApplicationStatus[msg.sender] = applicationStatus;
+    }
+
     /// @notice Function for community members to approve acceptance of new member to community
     function approveNutritionistRole(
         address applicant
     ) external onlyOwner applicantExists(applicant) {
-        NutritionistApplicationStatus applicationStatus = nutritionistApplicationStatus[
-                applicant
-            ];
         // Check that sender isn't a nutritionist already
         if (isNutritionist[applicant]) {
             revert AlreadyANutrionist();
         }
+
+        NutritionistApplicationStatus applicationStatus = nutritionistApplicationStatus[
+                applicant
+            ];
 
         // if (applicationStatus != NutritionistApplicationStatus.Pending) {
         //     revert InvalidApplicant();
@@ -261,37 +288,11 @@ contract Community is Ownable {
         nutritionist.nutritionistPersonalData = _nutritionistApplication
             .dataURI;
 
-        //nutritionists[applicant] = nutritionist;
         allNutritionists.push(nutritionist);
         allNutritionistsAddresses.push(applicant);
 
         // Emit event
         emit ApplicationApproved(applicant);
-    }
-
-    function cancelNutritionistApplication()
-        external
-        onlyNutritionists
-        applicantExists(msg.sender)
-    {
-        NutritionistApplicationStatus applicationStatus = nutritionistApplicationStatus[
-                msg.sender
-            ];
-        // Check that sender isn't a nutritionist already
-        if (isNutritionist[msg.sender]) {
-            revert AlreadyANutrionist();
-        }
-
-        // if (applicationStatus != NutritionistApplicationStatus.Pending) {
-        //     revert InvalidApplicant();
-        // }
-
-        uint256 applicantIndex = _getApplicantIndex(msg.sender);
-        delete allNutritionistsApplicants[applicantIndex];
-        delete nutritionistApplications[msg.sender];
-
-        applicationStatus = NutritionistApplicationStatus.Canceled;
-        nutritionistApplicationStatus[msg.sender] = applicationStatus;
     }
 
     function _getApplicantIndex(
@@ -300,7 +301,21 @@ contract Community is Ownable {
         _index = applicantToIndex[_applicant];
     }
 
-    // function rejectNutritionistRole() external onlyOwner {}
+    function rejectNutritionistRole(
+        address applicant
+    ) external onlyOwner applicantExists(applicant) {
+        // Check that sender isn't a nutritionist already
+        if (isNutritionist[applicant]) {
+            revert AlreadyANutrionist();
+        }
+
+        NutritionistApplicationStatus applicationStatus = nutritionistApplicationStatus[
+                applicant
+            ];
+
+        applicationStatus = NutritionistApplicationStatus.Rejected;
+        nutritionistApplicationStatus[applicant] = applicationStatus;
+    }
 
     // function renewSubscription() external onlyMembers {}
 
