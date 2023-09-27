@@ -6,6 +6,10 @@ pragma solidity 0.8.17;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
+import {AutomationRegistryInterface, State, Config} from "@chainlink/contracts/src/v0.8/automation/interfaces/v1_2/AutomationRegistryInterface1_2.sol";
+import {LinkTokenInterface} from "@chainlink/contracts/src/v0.8/shared/interfaces/LinkTokenInterface.sol";
+import {KeeperRegistrarInterface} from "./interfaces/KeeperRegistrarInterface.sol";
+
 error AlreadyAMember();
 
 error AlreadyANutrionist();
@@ -25,11 +29,20 @@ error InvalidDeadline();
 error InvalidSubStatus();
 
 contract Community is Ownable {
+    LinkTokenInterface public immutable i_link;
+    address public immutable registrar;
+    AutomationRegistryInterface public immutable i_registry;
+    bytes4 registerSig = KeeperRegistrarInterface.register.selector;
+    //mapping(uint256 => uint256) public counterToUpkeepID;
+
     using Counters for Counters.Counter;
 
-    Counters.Counter private _indexCounter;
+    Counters.Counter private _applicantIndexCounter;
+    Counters.Counter private _userIndexCounter;
 
     mapping(address => uint256) public applicantToIndex;
+
+    mapping(address => uint256) public userToIndex;
 
     uint256 public constant userApplicationFee = 0.01 ether;
 
@@ -49,7 +62,7 @@ contract Community is Ownable {
 
     mapping(address => bool) isNutritionist;
 
-    mapping(address => User) users;
+    mapping(address => User) users; //update users here
 
     mapping(address => Nutritionist) public nutritionists;
 
@@ -121,7 +134,7 @@ contract Community is Ownable {
         uint256 subDeadline;
     }
 
-    User[] public allUsers;
+    User[] public allUsers; //update users here
 
     struct Nutritionist {
         //string name;
@@ -144,8 +157,16 @@ contract Community is Ownable {
 
     Articles[] public allArticles;
 
-    constructor(address _treasury) {
+    constructor(
+        address _treasury,
+        LinkTokenInterface _link,
+        address _registrar,
+        AutomationRegistryInterface _registry
+    ) {
         treasury = _treasury;
+        i_link = _link;
+        registrar = _registrar;
+        i_registry = _registry;
     }
 
     /// @notice Restrict access to trusted `nutritionists`
@@ -193,6 +214,8 @@ contract Community is Ownable {
         if (msg.value < userApplicationFee) {
             revert InsufficientPayment();
         }
+
+        uint256 index = _userIndexCounter.current();
         isMember[msg.sender] = true;
         User memory user = users[msg.sender];
         user.userAddress = msg.sender;
@@ -201,6 +224,7 @@ contract Community is Ownable {
         user.subDeadline = block.timestamp + subscriptionDuration;
 
         users[msg.sender] = user;
+        userToIndex[msg.sender] = index;
         //mint userNft for the user
 
         payable(treasury).transfer(msg.value);
@@ -223,8 +247,13 @@ contract Community is Ownable {
 
         User memory user = users[_member];
         //isMember[_member] = false;
-        user.subStatus = UserSubscriptionStatus.Expired;
+        if (block.timestamp > user.subDeadline) {
+            user.subStatus = UserSubscriptionStatus.Expired;
+            user.subDeadline = 0;
+        }
         users[_member] = user;
+        uint256 userIndex = _getUserIndex(_member);
+        allUsers[userIndex] = user;
 
         //TODO
         //burn user nft with automation
@@ -240,7 +269,7 @@ contract Community is Ownable {
             revert AlreadyANutrionist();
         }
 
-        uint256 index = _indexCounter.current();
+        uint256 index = _applicantIndexCounter.current();
         NutritionistApplicationStatus applicationStatus = nutritionistApplicationStatus[
                 msg.sender
             ];
@@ -349,6 +378,15 @@ contract Community is Ownable {
         _index = applicantToIndex[_applicant];
     }
 
+    function _getUserIndex(
+        address _user
+    ) internal view returns (uint256 _index) {
+        if (!isMember[_user]) {
+            revert UnauthorizedMember(_user);
+        }
+        _index = userToIndex[_user];
+    }
+
     function rejectNutritionistRole(
         address applicant
     ) external onlyOwner applicantExists(applicant) {
@@ -448,4 +486,87 @@ contract Community is Ownable {
     }
 
     // function calculateRateOfAging() external {}
+
+    function registerAndPredictID(
+        string memory name, //upkeep name
+        bytes calldata encryptedEmail, // '0x'
+        address upkeepContract, //address(this)
+        uint32 gasLimit, //500000
+        address adminAddress, //address(msg.sender)
+        bytes calldata checkData, //0x - ABI-encoded, it is fixed and specified at Upkeep registration and used in every checkUpkeep. Can be empty (0x)
+        uint96 amount, //5 link - 5000000000000000000 wei
+        uint8 source //0
+    ) public {
+        (State memory state, , ) = i_registry.getState();
+        uint256 oldNonce = state.nonce; //number representing current upkeep
+        bytes memory payload = abi.encode(
+            name,
+            encryptedEmail,
+            upkeepContract,
+            gasLimit,
+            adminAddress,
+            checkData,
+            amount,
+            source,
+            address(this)
+        );
+        i_link.transferAndCall(
+            registrar,
+            amount,
+            bytes.concat(registerSig, payload)
+        );
+        (state, , ) = i_registry.getState();
+        uint256 newNonce = state.nonce;
+        if (newNonce == oldNonce + 1) {
+            uint256 upkeepID = uint256(
+                keccak256(
+                    abi.encodePacked(
+                        blockhash(block.number - 1),
+                        address(i_registry),
+                        uint32(oldNonce)
+                    )
+                )
+            );
+            // DEV - Use the upkeepID however you see fit
+            //counterToUpkeepID[counterID] = upkeepID;
+        } else {
+            revert("auto-approve disabled");
+        }
+    }
+
+    function checkUpkeep(
+        bytes calldata /* checkData */
+    ) external view returns (bool upkeepNeeded, bytes memory performData) {
+        //decode check data if you using it
+        //if interval has passed then return true
+
+        bool status;
+        User[] memory newUserArr = new User[](allUsers.length);
+        for (uint16 i = 0; i < allUsers.length; i++) {
+            User memory user = allUsers[i];
+            if (block.timestamp > user.subDeadline) {
+                // user.subStatus = UserSubscriptionStatus.Expired;
+                // user.subDeadline = 0;
+                newUserArr[i] = user;
+                status = true;
+            }
+        }
+        //upkeepNeeded = (block.timestamp - lastTimeStamp) > interval;
+        upkeepNeeded = status;
+        performData = abi.encode(newUserArr);
+        //pass checkData through to performData
+    }
+
+    function performUpkeep(bytes calldata performData) external {
+        //We highly recommend revalidating the upkeep in the performUpkeep function
+        User[] memory usersArr = abi.decode(performData, (User[]));
+        for (uint16 i = 0; i < usersArr.length; i++) {
+            User memory user = usersArr[i];
+            address userAddress = user.userAddress;
+            if (block.timestamp > user.subDeadline) {
+                revokeUser(userAddress);
+            }
+        }
+        // We don't use the performData in this example. The performData is generated by the Automation Node's call to your checkUpkeep function
+    }
 }
