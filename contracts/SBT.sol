@@ -7,10 +7,11 @@ import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 
 import "./interfaces/ISBT.sol";
 
-contract SBT is Context, ERC165, IERC721, ISBT {
+contract SBT is Context, ERC165, IERC721, ISBT, IERC721Metadata {
     error SBT__TransferNotSupported();
     error SBT_ApprovalNotSupported();
 
@@ -274,5 +275,24 @@ contract SBT is Context, ERC165, IERC721, ISBT {
         address
     ) external pure override returns (bool) {
         return false;
+    }
+
+        /**
+     * @dev See {IERC721Metadata-tokenURI}.
+     */
+    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+        _requireMinted(tokenId);
+
+        string memory baseURI = _baseURI();
+        return bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI, tokenId.toString())) : "";
+    }
+
+        /**
+     * @dev Base URI for computing {tokenURI}. If set, the resulting URI for each
+     * token will be the concatenation of the `baseURI` and the `tokenId`. Empty
+     * by default, can be overridden in child contracts.
+     */
+    function _baseURI() internal view virtual returns (string memory) {
+        return "";
     }
 }

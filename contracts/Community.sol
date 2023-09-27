@@ -223,7 +223,7 @@ contract Community is Ownable {
         nutritionistNFT = INutritionistNFT(_nutritionistNFT);
     }
 
-    function joinCommunity(string memory _userData) external payable {
+    function joinCommunity(string memory _userData, string memory nftUri) external payable {
         // Check that sender isn't a member already
         if (isMember[msg.sender]) {
             revert AlreadyAMember();
@@ -246,7 +246,7 @@ contract Community is Ownable {
         allUserAddresses.push(msg.sender);
 
         //mint userNft for the user
-        userNFT.mint(msg.sender);
+        userNFT.mint(msg.sender, nftUri);
         payable(treasury).transfer(msg.value);
 
         // Emit event

@@ -14,7 +14,7 @@ interface IUserNFT is ISBT {
 
   event BurnUserNFT(address member, uint256 tokenId);
 
-  function mint(address member) external;
+  function mint(address member, string memory uri) external;
 
   function burn(address member, uint256 _tokenId) external;
 
