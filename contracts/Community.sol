@@ -42,6 +42,10 @@ contract Community is Ownable {
     Counters.Counter private _applicantIndexCounter;
     Counters.Counter private _userIndexCounter;
 
+    INutritionistNFT public nutritionistNFT;
+
+    IUserNFT public userNFT;
+
     mapping(address => uint256) public applicantToIndex;
 
     mapping(address => uint256) public userToIndex;
@@ -164,11 +168,15 @@ contract Community is Ownable {
         LinkTokenInterface _link,
         address _registrar,
         AutomationRegistryInterface _registry
+        // address _userNFT,
+        // address _nutritionistNFT
     ) {
         treasury = _treasury;
         i_link = _link;
         registrar = _registrar;
         i_registry = _registry;
+        // userNFT = IUserNFT(_userNFT);
+        // nutritionistNFT = INutritionistNFT(_nutritionistNFT);
     }
 
     /// @notice Restrict access to trusted `nutritionists`
@@ -207,6 +215,14 @@ contract Community is Ownable {
         _;
     }
 
+    function setNFTs(
+        address _userNFT,
+        address _nutritionistNFT
+    ) public onlyOwner {
+        userNFT = IUserNFT(_userNFT);
+        nutritionistNFT = INutritionistNFT(_nutritionistNFT);
+    }
+
     function joinCommunity(string memory _userData) external payable {
         // Check that sender isn't a member already
         if (isMember[msg.sender]) {
@@ -224,14 +240,14 @@ contract Community is Ownable {
         user.userPersonalData = _userData;
         user.subStatus = UserSubscriptionStatus.Active;
         user.subDeadline = block.timestamp + subscriptionDuration;
-
         users[msg.sender] = user;
         userToIndex[msg.sender] = index;
-        //mint userNft for the user
-
-        payable(treasury).transfer(msg.value);
         allUsers.push(user);
         allUserAddresses.push(msg.sender);
+
+        //mint userNft for the user
+        userNFT.mint(msg.sender);
+        payable(treasury).transfer(msg.value);
 
         // Emit event
         emit NewSignUp(msg.sender, _userData);
@@ -256,9 +272,9 @@ contract Community is Ownable {
         users[_member] = user;
         uint256 userIndex = _getUserIndex(_member);
         allUsers[userIndex] = user;
+        uint256 userTokenId = userNFT.getTokenIdOfOwner(user.userAddress);
 
-        //TODO
-        //burn user nft with automation
+        userNFT.burn(user.userAddress, userTokenId);
         //nft will be used for access control with lighthouse
     }
 
