@@ -14,4 +14,10 @@ contract NutritionistNFT is INutritionistNFT, SBT {
 
         emit MintNutritionistNFT(nutritionist);
     }
+
+    function burn(address nutritionist, uint256 _tokenId) external override {
+        _burn(nutritionist, _tokenId);
+
+        emit BurnNutritionistNFT(nutritionist, _tokenId);
+    }
 }

@@ -14,4 +14,10 @@ contract UserNFT is IUserNFT, SBT {
 
         emit MintUserNFT(nutritionist);
     }
+
+    function burn(address nutritionist, uint256 _tokenId) external override {
+        _burn(nutritionist, _tokenId);
+
+        emit BurnUserNFT(nutritionist, _tokenId);
+    }
 }

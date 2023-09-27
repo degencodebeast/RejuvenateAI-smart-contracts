@@ -153,6 +153,43 @@ contract SBT is Context, ERC165, IERC721, ISBT {
         emit Transfer(address(0), to, tokenId);
     }
 
+    
+    /**
+     * @dev burns `tokenId` and transfers it to `zero address`.
+     *
+     * Requirements:
+     *
+     * - `tokenId` must exist.
+     * - `from` cannot be the zero address.
+     *
+     * Emits a {Transfer} event.
+     */
+    function _burn(address from, uint256 tokenId) internal virtual {
+        require(from != address(0), "ERC721: from cannot be a zero address");
+        require(_exists(tokenId), "ERC721: token id needs to be minted");
+
+     // When `from` is zero, the tokens will be minted for `to`.
+     //When `to` is zero, ``from``'s tokens will be burned.
+
+        _beforeTokenTransfer(from, address(0), tokenId, 1);
+
+        // Check that tokenId was not burned by `_beforeTokenTransfer` hook
+        require(_exists(tokenId), "ERC721: token already minted");
+
+        unchecked {
+            // Will not overflow unless all 2**256 token ids are minted to the same owner.
+            // Given that tokens are minted one by one, it is impossible in practice that
+            // this ever happens. Might change if we allow batch minting.
+            // The ERC fails to describe this case.
+            _balances[from] -= 1;
+        }
+
+        _owners[tokenId] = address(0);
+        s_ownerToTokenId[address(0)] = tokenId;
+
+        emit Transfer(from, address(0), tokenId);
+    }
+
     /**
      * @dev Reverts if the `tokenId` has not been minted yet.
      */

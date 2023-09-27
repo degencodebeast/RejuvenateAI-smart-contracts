@@ -9,6 +9,8 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import {AutomationRegistryInterface, State, Config} from "@chainlink/contracts/src/v0.8/automation/interfaces/v1_2/AutomationRegistryInterface1_2.sol";
 import {LinkTokenInterface} from "@chainlink/contracts/src/v0.8/shared/interfaces/LinkTokenInterface.sol";
 import {KeeperRegistrarInterface} from "./interfaces/KeeperRegistrarInterface.sol";
+import {IUserNFT} from "./interfaces/IUserNFT.sol";
+import {INutritionistNFT} from "./interfaces/INutritionistNFT.sol";
 
 error AlreadyAMember();
 
