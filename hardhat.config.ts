@@ -29,9 +29,13 @@
 
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+require('dotenv').config()
+//import "@openzeppelin/hardhat-upgrades"
 import 'hardhat-gas-reporter';
 import 'solidity-coverage';
 //import "@nomiclabs/hardhat-ethers";
+
+// const walletPrivateKey =  `${process.env.PRIVATE_KEY}`
 
 const config: HardhatUserConfig = {
   // solidity: "0.8.0",
@@ -61,10 +65,35 @@ const config: HardhatUserConfig = {
     },
 
   },
+  defaultNetwork: "hardhat",
+  networks: {
+    hardhat: {},
+    filecoinCalibrationNet: {
+      url: "https://filecoin-calibration.chainstacklabs.com/rpc/v1",
+      chainId: 314159,
+      accounts: [`${process.env.PRIVATE_KEY}`],
+    },
+    filecoinMainnet: {
+      url: "https://api.node.glif.io", //'https://rpc.ankr.com/filecoin_testnet', //https://filecoin-hyperspace.chainstacklabs.com/rpc/v1
+      chainId: 314,
+      accounts: [`${process.env.PRIVATE_KEY}`],
+    },
+    mumbai: {
+      url: "https://polygon-mumbai.blockpi.network/v1/rpc/public",
+      chainId: 80001,
+      accounts: [`${process.env.PRIVATE_KEY}`],
+    },
+    lilypad: {
+      url: "http://testnet.lilypadnetwork.org:8545",
+      chainId: 1337,
+      accounts: [`${process.env.PRIVATE_KEY}`],
+    }
+    ,
+  },
   typechain: {
     target: "ethers-v5"
   },
-  
+
 };
 
 export default config;

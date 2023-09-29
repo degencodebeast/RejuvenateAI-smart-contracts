@@ -1,0 +1,29 @@
+Deploying Contracts for FVM....
+Deploying treasury for FVM
+---- Treasury Contract was deployed to: ----  0x34FE144543475Ee0D78bB048a114Fc5eE900e99D
+Deploying Community contract for FVM
+---- Community Contract for FVM was deployed to calibration testnet at this address: ----  0xE8f8B364a5bD42513d12B9Dd0ee2A8B9dCfAB303
+Deploying UserNFT for FVM....
+---- UserNFT Contract was deployed to: ----  0x17DAbD6a4EdE37CAC9acc7f107931E2A0600F409
+Deploying NutritionistNFT for FVM....
+---- NutritionistNFT Contract was deployed to: ----  0xeE72F500671d7F8439c0b3B3c6a472CdA4BCb560
+
+Deploying Contracts for Lilypad....
+Deploying treasury for Lilypad
+---- Treasury Contract was deployed to: ----  0x4BA50b0D35253fBa2B7D683C620ad4fAf4a3485f
+Deploying Community contract for Lilypad
+---- Community Contract for Lilypad was deployed to the lalechuza testnet at this address: ----  0xB6A44e41Cb7aeB0A8Ac45a36dDE06072FFB1dC12
+Deploying UserNFT for Lilypad....
+---- UserNFT Contract was deployed to: ----  0xcd5d5a793b7259b2fFa3d8A1CcF2b640d7d11784
+Deploying NutritionistNFT for Lilypad....
+---- NutritionistNFT Contract was deployed to: ----  0x7dA8F2F7EF7760E086c2b862cdDeBEFa8d969aa2
+
+Deploying Contracts for Chainlink....
+Deploying treasury for Chainlink
+---- Treasury Contract was deployed to: ----  0xBE587980878F5c218583f9dA7459798bf92d4FcF
+Deploying Community contract for Chainlink
+---- Community Contract for Chainlink was deployed to polygon at this address: ----  0xc64ABE13123EC509fF083a4Ce670fE47Aac9Ced8
+Deploying UserNFT for Chainlink....
+---- UserNFT Contract was deployed to: ----  0x42D157421b5520E7477c5B3399312Da9685b5326
+Deploying NutritionistNFT for Chainlink....
+---- NutritionistNFT Contract was deployed to: ----  0xd2afe42AAF6F19c2C7719Ed03bC266e89b7D7030

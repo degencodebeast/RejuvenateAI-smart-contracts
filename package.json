@@ -30,6 +30,7 @@
   "dependencies": {
     "@chainlink/contracts": "^0.7.1",
     "@hyperlane-xyz/core": "^1.4.2",
+    "@openzeppelin/hardhat-upgrades": "^2.3.0",
     "openai": "^4.8.0"
   }
 }
