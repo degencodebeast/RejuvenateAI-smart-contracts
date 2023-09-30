@@ -9,16 +9,23 @@ import { NutritionistNFT__factory, UserNFT__factory, Treasury__factory, Communit
 const privateKey = process.env.PRIVATE_KEY as string;
 const wallet = new Wallet(privateKey);
 
-const rpc = "https://filecoin-calibration.chainstacklabs.com/rpc/v1	";
+const fvmRpc = "https://filecoin-calibration.chainstacklabs.com/rpc/v1	";
+const lilypadRpc = "http://testnet.lilypadnetwork.org:8545"
+const mumbaiRpc = "https://polygon-mumbai.blockpi.network/v1/rpc/public"
+
 const modicumContract = "0x422F325AA109A3038BDCb7B03Dd0331A4aC2cD1a";
 const mumbaiRegistryAddr = "0xE16Df59B887e3Caa439E0b29B42bA2e7976FD8b2"
 const mumbaiRegistrarAddr = "0x57A4a13b35d25EE78e084168aBaC5ad360252467"
 const linkTokenAddr = "0x326C977E6efc84E512bB9C30f76E30c160eD06FB";
 
 async function main() {
-    await deployCommunityFVMContracts();
+    //await deployCommunityFVMContracts();
     //await deployCommunityLilypadContracts();
     //await deployCommunityChainlinkContracts();
+
+    //await setupChainlinkNFTs();
+    //await setupLilypadNFTs();
+    await setupFVMNFTs();
 }
 
 async function deployTreasury() {
@@ -52,6 +59,85 @@ async function deployNutritionistNFT(_communityAddr: any) {
     console.log("---- NutritionistNFT Contract was deployed to: ---- ", nutritionistNFT.address);
     return nutritionistNFT.address;
 }
+
+async function setupChainlinkNFTs() {
+    let userNFTAddr = "0x42D157421b5520E7477c5B3399312Da9685b5326"
+    let nutritionistNFTAddr = "0xd2afe42AAF6F19c2C7719Ed03bC266e89b7D7030"
+    let communityAddr = "0xc64ABE13123EC509fF083a4Ce670fE47Aac9Ced8"
+
+    const provider = getDefaultProvider(mumbaiRpc);
+    const connectedWallet = wallet.connect(provider);
+
+    const communityFactory = new CommunityChainlink__factory(connectedWallet);
+    const community = communityFactory.attach(communityAddr);
+
+    try {
+        console.log("Setting up NFTs for chainlink mumbai")
+        const tx = await community.setNFTs(userNFTAddr, nutritionistNFTAddr);
+        await tx.wait();
+        console.log("NFTs setup successful")
+    }
+
+    catch (error) {
+        console.log(`[source] community.setNFTs ERROR!`);
+        console.log(`[source]`, error);
+
+    }
+
+}
+
+
+async function setupLilypadNFTs() {
+    let userNFTAddr = "0xcd5d5a793b7259b2fFa3d8A1CcF2b640d7d11784"
+    let nutritionistNFTAddr = "0x7dA8F2F7EF7760E086c2b862cdDeBEFa8d969aa2"
+    let communityAddr = "0xB6A44e41Cb7aeB0A8Ac45a36dDE06072FFB1dC12"
+
+    const provider = getDefaultProvider(lilypadRpc);
+    const connectedWallet = wallet.connect(provider);
+
+    const communityFactory = new CommunityLilypad__factory(connectedWallet);
+    const community = communityFactory.attach(communityAddr);
+
+    try {
+        console.log("Setting up NFTs for lilypad")
+        const tx = await community.setNFTs(userNFTAddr, nutritionistNFTAddr);
+        await tx.wait();
+        console.log("NFTs setup successful")
+    }
+
+    catch (error) {
+        console.log(`[source] community.setNFTs ERROR!`);
+        console.log(`[source]`, error);
+
+    }
+}
+
+
+async function setupFVMNFTs() {
+    let userNFTAddr = "0x17DAbD6a4EdE37CAC9acc7f107931E2A0600F409"
+    let nutritionistNFTAddr = "0xeE72F500671d7F8439c0b3B3c6a472CdA4BCb560"
+    let communityAddr = "0xE8f8B364a5bD42513d12B9Dd0ee2A8B9dCfAB303"
+
+    const provider = getDefaultProvider(fvmRpc);
+    const connectedWallet = wallet.connect(provider);
+
+    const communityFactory = new CommunityFVM__factory(connectedWallet);
+    const community = communityFactory.attach(communityAddr);
+
+    try {
+        console.log("Setting up NFTs for FVM")
+        const tx = await community.setNFTs(userNFTAddr, nutritionistNFTAddr);
+        await tx.wait();
+        console.log("NFTs setup successful")
+    }
+
+    catch (error) {
+        console.log(`[source] community.setNFTs ERROR!`);
+        console.log(`[source]`, error);
+
+    }
+}
+
 
 async function deployCommunityLilypadContracts() {
 
